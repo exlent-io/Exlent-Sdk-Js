@@ -150,12 +150,14 @@ class CopyRows extends Section {
     this.dstSheet = dstSheet
     this.dstRow = dstRow
     this.extra = extra
+    this.value = []
   }
   getTop() {
     return this.dstRow
   }
+  // should be called after value set
   getBottom() {
-    return rowPlus(this.srcRowRange.split('~')[1], this.dstRow)
+    return rowPlus((parseInt(rowMinus(this.srcRowRange.split('~')[1], this.srcRowRange.split('~')[0])) * this.value.length).toString(), this.dstRow)
   }
 }
 
@@ -291,13 +293,16 @@ class CopyList extends PreProcess {
   // Should be called after value set
   getBottom() {
 
-    const addends = [
-      ((parseInt(rowMinus(this.headRowRange.split('~')[1], this.headRowRange.split('~')[0])) + 1) * Math.min(this.value.length, 1)).toString(),
-      ((parseInt(rowMinus(this.bodyRowRange.split('~')[1], this.bodyRowRange.split('~')[0])) + 1) * Math.max(0, this.value.length - 2)).toString(),
-      ((parseInt(rowMinus(this.footRowRange.split('~')[1], this.footRowRange.split('~')[0])) + 1) * Math.max(0, Math.min(this.value.length - 1, 1))).toString()
-    ]
 
-    return addends.reduce(rowPlus, this.dstRow)
+    const b =  this.process().reduce((bottomInt, section) => {
+      
+      if( section instanceof CopyRows, section) {
+      return Math.max(parseInt(section.getBottom()), bottomInt)
+      } else {
+        return bottomInt
+      }
+    }, parseInt(this.dstRow)).toString()
+    return b
   }
 }
 
@@ -317,7 +322,7 @@ function resolveRow(rootOps, it, index) {
     // Group 4.	4-6	+3
     const refObj = rootOps[index + parseInt(matchRelative[2])]
     const refRow = getDstRow(refObj, matchRelative[3])
-    return rowPlus(refRow, (matchRelative[4] || 0))
+    return rowPlus(refRow, (matchRelative[4] || '0'))
 
   } else if (matchAbsolute != null) {
     // #5b+1
@@ -328,9 +333,9 @@ function resolveRow(rootOps, it, index) {
     // Group 4.	3-5	+1
 
     // index is 1based
-    const refObj = rootOps[parseInt(matchRelative[2]) - 1]
-    const refRow = getDstRow(refObj, matchRelative[3])
-    return rowPlus(refRow, (matchRelative[4] || 0))
+    const refObj = rootOps[parseInt(matchAbsolute[2]) - 1]
+    const refRow = getDstRow(refObj, matchAbsolute[3])
+    return rowPlus(refRow, (matchAbsolute[4] || '0'))
   }
   throw Error('BAD FORMAT')
 }
@@ -376,6 +381,8 @@ function compile(rootOps, data) {
     } else if (it instanceof CopyList) {
       it.dstRow = resolveRow(rootOps, it.dstRow, index)
       it.process().forEach(it => sections.push(it))
+    } else {
+      sections.push(it)
     }
   })
 
