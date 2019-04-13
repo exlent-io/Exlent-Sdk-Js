@@ -1,5 +1,8 @@
 
 class RootOp {
+  constructor(op) {
+    this.op = op
+  }
   getTop() {
     // return Number
     throw Error('SHOULD OVERRIDE getTop')
@@ -112,9 +115,7 @@ function rowMinus(a, b) {
 
 class Section extends RootOp {
   constructor(op) {
-    super()
-    // For JAVA side usage
-    this.op = op
+    super(op)
   }
 }
 
@@ -181,6 +182,9 @@ class Fill extends Section {
 }
 
 class PreProcess extends RootOp {
+  constructor(op) {
+    super(op)
+  }
   process() {
     // return new Section()
     throw Error('SHOULD OVERRIDE process')
@@ -194,7 +198,7 @@ class CopyList extends PreProcess {
   // @param sections : Currently we only support Fill
   constructor(srcSheet, headRowRange, bodyRowRange, footRowRange, dstSheet, dstRow, sections, resolveSingle, title, extra) {
 
-    super()
+    super('COPY_LIST')
     this.srcSheet = srcSheet
     this.headRowRange = headRowRange
     this.bodyRowRange = bodyRowRange
@@ -294,10 +298,10 @@ class CopyList extends PreProcess {
   getBottom() {
 
 
-    const b =  this.process().reduce((bottomInt, section) => {
-      
-      if( section instanceof CopyRows, section) {
-      return Math.max(parseInt(section.getBottom()), bottomInt)
+    const b = this.process().reduce((bottomInt, section) => {
+
+      if (section instanceof CopyRows, section) {
+        return Math.max(parseInt(section.getBottom()), bottomInt)
       } else {
         return bottomInt
       }
@@ -351,6 +355,12 @@ function getDstRow(refObj, side) {
       throw Error('BAD FORMAT ' + side)
   }
 }
+
+/**
+* @param {[RootOp]} rootOps - A list of RootOp
+* @param {string} data - json
+* @returns {[Section]} - you may use this response as the payload for requesting xlsxmanipulator with your template
+*/
 function compile(rootOps, data) {
 
   // 1. fill value
@@ -389,5 +399,36 @@ function compile(rootOps, data) {
   return sections
 }
 
+const rootOpFormat = /^[A-Za-z_]+$/
 
-export { AddSheet, DeleteSheet, RenameSheet, CopyRows, Fill, CopyList, compile }
+function deserializeRootOps(objList) {
+  return objList.map(it => {
+    // validate it.op
+    const op = it.op.match(rootOpFormat)
+    if (op == null) {
+      throw Error(it.op + " is not a valid RootOp")
+    }
+    const pascalClass = toPascalCase(op[0])
+    if (pascalClass == CopyList.op) {
+      it.value = deserializeRootOps(it.value)
+    }
+    Object.setPrototypeOf(it, eval(pascalClass).prototype)
+    return it
+  })
+}
+
+function toPascalCase(str) {
+  return [...str].reduce((array, c) => {
+    if (array[0]) {
+      array[0] = false
+      array[1] += c
+    } else if (c == '_') {
+      array[0] = true
+    } else {
+      array[1] += c.toLowerCase()
+    }
+    return array
+  }, [true, ''])[1]
+}
+
+export { AddSheet, DeleteSheet, RenameSheet, CopyRows, Fill, CopyList, compile, deserializeRootOps }
