@@ -143,14 +143,13 @@ class CopyRows extends Section {
     this.dstSheet = dstSheet
     this.dstRow = dstRow
     this.extra = extra
-    this.value = []
   }
   getTop () {
     return this.dstRow
   }
   // should be called after value set
   getBottom () {
-    return rowPlus((parseInt(rowMinus(this.srcRowRange.split('~')[1], this.srcRowRange.split('~')[0])) * this.value.length).toString(), this.dstRow)
+    return rowPlus((parseInt(rowMinus(this.srcRowRange.split('~')[1], this.srcRowRange.split('~')[0]))).toString(), this.dstRow)
   }
 }
 
