@@ -1,56 +1,54 @@
 
 class RootOp {
-  constructor(op) {
+  constructor (op) {
     this.op = op
   }
-  getTop() {
+  getTop () {
     // return Number
     throw Error('SHOULD OVERRIDE getTop')
   }
-  getBottom() {
+  getBottom () {
     // return Number
     throw Error('SHOULD OVERRIDE getBottom')
   }
 }
 
-
 const numFormat = /^[+-]?\d+$/
 // &+2b+3
-// Full match	0-6	&+2b+3
-// Group 1.	0-4	&+2b
-// Group 2.	1-3	+2
-// Group 3.	3-4	b
-// Group 4.	4-6	+3
+// Full match 0-6 &+2b+3
+// Group 1. 0-4 &+2b
+// Group 2. 1-3 +2
+// Group 3. 3-4 b
+// Group 4. 4-6 +3
 const relativeRefFormat = /^(&([+-]\d+)?([A-Za-z]))([+-]\d+)?$/
 
 // #5b+1
-// Full match	0-5	#5b+1
-// Group 1.	0-3	#5b
-// Group 2.	1-2	5
-// Group 3.	2-3	b
-// Group 4.	3-5	+1
+// Full match 0-5 #5b+1
+// Group 1. 0-3 #5b
+// Group 2. 1-2 5
+// Group 3. 2-3 b
+// Group 4. 3-5 +1
 const absoluteRefFormat = /^(#(\d+)([A-Za-z]))([+-]\d+)?$/
 
 // H#0b+0
-// Full match	0-6	H#0b+0
-// Group 1.	0-1	H
-// Group 2.	1-6	#0b+0
-// Group 4.	1-4	#0b
-// Group 5.	2-3	0
-// Group 6.	3-4	b
-// Group 7.	4-6	+0
+// Full match 0-6 H#0b+0
+// Group 1. 0-1 H
+// Group 2. 1-6 #0b+0
+// Group 4. 1-4 #0b
+// Group 5. 2-3 0
+// Group 6. 3-4 b
+// Group 7. 4-6 +0
 const coRefFormat = /^([A-Z]+)((\d+)|(#(\d+)([A-Za-z]))([+-]\d+)|(&([+-]\d+)?([A-Za-z]))([+-]\d+))$/
 
-
-function getRowFromCo(co) {
+function getRowFromCo (co) {
   return co.match(coRefFormat)[2]
 }
 
-function getColumnFromCo(co) {
+function getColumnFromCo (co) {
   return co.match(coRefFormat)[1]
 }
 
-function rowPlus(a, b) {
+function rowPlus (a, b) {
   if ((a.includes('&') || a.includes('#')) && (b.includes('&') || b.includes('#'))) {
     throw Error('ONLY ALLOW 1 VARIABLE CONTAINS REF')
   }
@@ -60,7 +58,6 @@ function rowPlus(a, b) {
   }
 
   [[a, b], [b, a]].forEach(it => {
-
     const matchRelative = it[0].match(relativeRefFormat)
     if (matchRelative != null) {
       if (it[1].match(numFormat) == null) {
@@ -71,7 +68,6 @@ function rowPlus(a, b) {
       return matchRelative[1] + (sum >= 0 ? '+' : '') + sum
     }
 
-
     const matchAbsolute = it[0].match(absoluteRefFormat)
     if (matchAbsolute != null) {
       if (it[1].match(numFormat) == null) {
@@ -81,13 +77,12 @@ function rowPlus(a, b) {
       const sum = parseInt(matchAbsolute[4] || 0) + parseInt(it[1])
       return matchAbsolute[1] + (sum >= 0 ? '+' : '') + sum
     }
-
   })
   throw Error('FORMAT ERROR')
 }
 
 // 這邊不處理一個有 REF 一個沒 REF 的 case
-function rowMinus(a, b) {
+function rowMinus (a, b) {
   if (a.match(numFormat) != null && b.match(numFormat) != null) {
     return (parseInt(a) - parseInt(b)).toString()
   }
@@ -95,7 +90,7 @@ function rowMinus(a, b) {
   const matchRelativeA = a.match(relativeRefFormat)
   const matchRelativeB = b.match(relativeRefFormat)
   if (matchRelativeA != null && matchRelativeB != null) {
-    if (matchRelativeA[1] != matchRelativeB[1]) {
+    if (matchRelativeA[1] !== matchRelativeB[1]) {
       throw Error('CROSS REF ERROR ' + matchRelativeA[1] + ' != ' + matchRelativeB[1])
     }
     return (parseInt(matchRelativeA[4] || 0) - parseInt(matchRelativeB[4] || 0)).toString()
@@ -104,7 +99,7 @@ function rowMinus(a, b) {
   const matchAbsoluteA = a.match(absoluteRefFormat)
   const matchAbsoluteB = b.match(absoluteRefFormat)
   if (matchAbsoluteA != null && matchAbsoluteB != null) {
-    if (matchAbsoluteA[1] != matchAbsoluteB[1]) {
+    if (matchAbsoluteA[1] !== matchAbsoluteB[1]) {
       throw Error('CROSS REF ERROR ' + matchAbsoluteA[1] + ' != ' + matchAbsoluteB[1])
     }
     return (parseInt(matchAbsoluteA[4] || 0) - parseInt(matchAbsoluteB[4] || 0)).toString()
@@ -114,13 +109,10 @@ function rowMinus(a, b) {
 }
 
 class Section extends RootOp {
-  constructor(op) {
-    super(op)
-  }
 }
 
 class AddSheet extends Section {
-  constructor(name, order) {
+  constructor (name, order) {
     super('ADD_SHEET')
     this.name = name
     this.order = order
@@ -128,14 +120,14 @@ class AddSheet extends Section {
 }
 
 class DeleteSheet extends Section {
-  constructor(name) {
+  constructor (name) {
     super('DELETE_SHEET')
     this.name = name
   }
 }
 
 class RenameSheet extends Section {
-  constructor(oldName, newName) {
+  constructor (oldName, newName) {
     super('RENAME_SHEET')
     this.oldName = oldName
     this.newName = newName
@@ -143,7 +135,7 @@ class RenameSheet extends Section {
 }
 
 class CopyRows extends Section {
-  constructor(srcSheet, srcRowRange, dstSheet, dstRow, extra) {
+  constructor (srcSheet, srcRowRange, dstSheet, dstRow, extra) {
     super('COPY_ROWS')
     // TODO valid input
     this.srcSheet = srcSheet
@@ -153,17 +145,17 @@ class CopyRows extends Section {
     this.extra = extra
     this.value = []
   }
-  getTop() {
+  getTop () {
     return this.dstRow
   }
   // should be called after value set
-  getBottom() {
+  getBottom () {
     return rowPlus((parseInt(rowMinus(this.srcRowRange.split('~')[1], this.srcRowRange.split('~')[0])) * this.value.length).toString(), this.dstRow)
   }
 }
 
 class Fill extends Section {
-  constructor(sheet, co, title, extra) {
+  constructor (sheet, co, title, extra) {
     super('FILL')
     this.sheet = sheet
     this.co = co
@@ -171,21 +163,18 @@ class Fill extends Section {
     this.extra = extra
     this.value = ''
   }
-  getTop() {
+  getTop () {
     return getRowFromCo(this.co)
   }
 
   // we only know co, but don't know if the dst is a MergedRegion, so we return the getTop()
-  getBottom() {
+  getBottom () {
     return this.getTop()
   }
 }
 
 class PreProcess extends RootOp {
-  constructor(op) {
-    super(op)
-  }
-  process() {
+  process () {
     // return new Section()
     throw Error('SHOULD OVERRIDE process')
   }
@@ -193,11 +182,9 @@ class PreProcess extends RootOp {
 
 // Will be replaced
 class CopyList extends PreProcess {
-
   // @param resolveSingle : 0 -> head, 1 -> body, 2 -> foot
   // @param sections : Currently we only support Fill
-  constructor(srcSheet, headRowRange, bodyRowRange, footRowRange, dstSheet, dstRow, sections, resolveSingle, title, extra) {
-
+  constructor (srcSheet, headRowRange, bodyRowRange, footRowRange, dstSheet, dstRow, sections, resolveSingle, title, extra) {
     super('COPY_LIST')
     this.srcSheet = srcSheet
     this.headRowRange = headRowRange
@@ -212,8 +199,7 @@ class CopyList extends PreProcess {
     this.value = []
   }
 
-
-  process() {
+  process () {
     if (this.dstRow.match(numFormat) == null) {
       throw Error('this function should be called after dstRow got resolved')
     }
@@ -222,8 +208,7 @@ class CopyList extends PreProcess {
     let dstRow = this.dstRow
 
     if (this.value.length > 0) {
-
-      const srcRowRange = (this.value.length == 1) ? [this.headRowRange, this.bodyRowRange, this.footRowRange][this.resolveSingle] : this.headRowRange
+      const srcRowRange = (this.value.length === 1) ? [this.headRowRange, this.bodyRowRange, this.footRowRange][this.resolveSingle] : this.headRowRange
 
       result.push(new CopyRows(this.srcSheet, srcRowRange, this.dstSheet, dstRow, ''))
       this.sections.map(section => {
@@ -241,11 +226,9 @@ class CopyList extends PreProcess {
         .forEach(it => result.push(it))
 
       dstRow = rowPlus(dstRow, rowPlus(rowMinus(srcRowRange.split('~')[1], srcRowRange.split('~')[0]), '1'))
-
     }
 
     this.value.slice(1, -1).forEach(it => {
-
       const srcRowRange = this.bodyRowRange
 
       result.push(new CopyRows(this.srcSheet, srcRowRange, this.dstSheet, dstRow, ''))
@@ -264,7 +247,6 @@ class CopyList extends PreProcess {
         .forEach(result.push)
 
       dstRow = rowPlus(dstRow, rowPlus(rowMinus(srcRowRange.split('~')[1], srcRowRange.split('~')[0]), '1'))
-
     })
 
     if (this.value.length > 1) {
@@ -282,25 +264,21 @@ class CopyList extends PreProcess {
         return newFill
       })
         .forEach(it => result.push(it))
-
     }
     return result
   }
 
   // TODO handle when value isEmpty
   // Should be called after value set
-  getTop() {
+  getTop () {
     return this.dstRow
   }
 
   // TODO handle when value isEmpty
   // Should be called after value set
-  getBottom() {
-
-
+  getBottom () {
     const b = this.process().reduce((bottomInt, section) => {
-
-      if (section instanceof CopyRows, section) {
+      if (section instanceof CopyRows) {
         return Math.max(parseInt(section.getBottom()), bottomInt)
       } else {
         return bottomInt
@@ -310,8 +288,7 @@ class CopyList extends PreProcess {
   }
 }
 
-
-function resolveRow(rootOps, it, index) {
+function resolveRow (rootOps, it, index) {
   const matchRelative = it.match(relativeRefFormat)
   const matchAbsolute = it.match(absoluteRefFormat)
 
@@ -319,22 +296,21 @@ function resolveRow(rootOps, it, index) {
     return it
   } else if (matchRelative != null) {
     // &+2b+3
-    // Full match	0-6	&+2b+3
-    // Group 1.	0-4	&+2b
-    // Group 2.	1-3	+2
-    // Group 3.	3-4	b
-    // Group 4.	4-6	+3
+    // Full match 0-6 &+2b+3
+    // Group 1. 0-4 &+2b
+    // Group 2. 1-3 +2
+    // Group 3. 3-4 b
+    // Group 4. 4-6 +3
     const refObj = rootOps[index + parseInt(matchRelative[2])]
     const refRow = getDstRow(refObj, matchRelative[3])
     return rowPlus(refRow, (matchRelative[4] || '0'))
-
   } else if (matchAbsolute != null) {
     // #5b+1
-    // Full match	0-5	#5b+1
-    // Group 1.	0-3	#5b
-    // Group 2.	1-2	5
-    // Group 3.	2-3	b
-    // Group 4.	3-5	+1
+    // Full match 0-5 #5b+1
+    // Group 1. 0-3 #5b
+    // Group 2. 1-2 5
+    // Group 3. 2-3 b
+    // Group 4. 3-5 +1
 
     // index is 1based
     const refObj = rootOps[parseInt(matchAbsolute[2]) - 1]
@@ -344,9 +320,8 @@ function resolveRow(rootOps, it, index) {
   throw Error('BAD FORMAT')
 }
 
-function getDstRow(refObj, side) {
+function getDstRow (refObj, side) {
   switch (side) {
-
     case 'b':
       return refObj.getBottom()
     case 't':
@@ -361,13 +336,11 @@ function getDstRow(refObj, side) {
 * @param {string} data - json
 * @returns {[Section]} - you may use this response as the payload for requesting xlsxmanipulator with your template
 */
-function compile(rootOps, data) {
-
+function compile (rootOps, data) {
   // 1. fill value
   Object.keys(data).forEach(it => {
-
     const target = rootOps.find(rootOp => {
-      return rootOp.title == it
+      return rootOp.title === it
     })
     if (target != null) {
       target.value = data[it]
@@ -378,14 +351,13 @@ function compile(rootOps, data) {
 
   const sections = []
 
-  //2. resolve topology order 3. generate full sections
-  //這邊假設所有 REF 都只會往前指，我們就照順序來解 REF
+  // 2. resolve topology order 3. generate full sections
+  // 這邊假設所有 REF 都只會往前指，我們就照順序來解 REF
   rootOps.forEach((it, index) => {
     if (it instanceof CopyRows) {
       it.dstRow = resolveRow(rootOps, it.dstRow, index)
       sections.push(it)
     } else if (it instanceof Fill) {
-
       it.co = getColumnFromCo(it.co) + resolveRow(rootOps, getRowFromCo(it.co), index)
       sections.push(it)
     } else if (it instanceof CopyList) {
@@ -401,28 +373,29 @@ function compile(rootOps, data) {
 
 const rootOpFormat = /^[A-Za-z_]+$/
 
-function deserializeRootOps(objList) {
+function deserializeRootOps (objList) {
   return objList.map(it => {
     // validate it.op
     const op = it.op.match(rootOpFormat)
     if (op == null) {
-      throw Error(it.op + " is not a valid RootOp")
+      throw Error(it.op + ' is not a valid RootOp')
     }
     const pascalClass = toPascalCase(op[0])
-    if (pascalClass == CopyList.op) {
+    if (pascalClass === CopyList.op) {
       it.value = deserializeRootOps(it.value)
     }
+    // eslint-disable-next-line no-eval
     Object.setPrototypeOf(it, eval(pascalClass).prototype)
     return it
   })
 }
 
-function toPascalCase(str) {
+function toPascalCase (str) {
   return [...str].reduce((array, c) => {
     if (array[0]) {
       array[0] = false
       array[1] += c
-    } else if (c == '_') {
+    } else if (c === '_') {
       array[0] = true
     } else {
       array[1] += c.toLowerCase()
